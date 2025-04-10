@@ -1,18 +1,14 @@
 import type { NextConfig } from "next";
 
-
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
-        fs: false, // отключаем node-модуль 'fs' в браузере
+        fs: false,
       };
     }
     return config;
   },
 };
-
-module.exports = nextConfig;
 
 export default nextConfig;

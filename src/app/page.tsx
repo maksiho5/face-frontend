@@ -67,7 +67,7 @@ const App = () => {
 
         const labeledDescriptors = await Promise.all(
           getFace.data.map(async (data) => {
-            const descriptions: faceapi.FaceDescriptor[] = [];
+            const descriptions = [];
             const imgUrl = data.path;
             try {
               const img = await faceapi.fetchImage(imgUrl);
@@ -118,7 +118,7 @@ const App = () => {
       ) : mode === "addFace" ? (
         <CreateFace  />
       ) : (
-        <FaceRecognition  faces={faces} trainingLoaded={trainingLoaded} labeledFaceDescriptors={labeledFaceDescriptors} learningLoaded={learningLoaded} />
+        <FaceRecognition  faces={faces} trainingLoaded={trainingLoaded} labeledFaceDescriptors={labeledFaceDescriptors ?? []} learningLoaded={learningLoaded} />
       )}
     </div>
   );

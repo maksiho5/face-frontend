@@ -15,6 +15,7 @@ interface CreatedImage {
     message: string
 }
 
+
   
  
   function CreateFace({ labeledFaceDescriptors, faces, setFces }: { labeledFaceDescriptors: faceapi.LabeledFaceDescriptors[], faces: FileData[], setFces: React.Dispatch<React.SetStateAction<FileData[]>> }) {

@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import * as faceapi from "face-api.js";
-import FaceRecognition from "@/components/FaceRecognition/FaceRecognition";
+import FaceRecognition from "@/components/FaceRecognition/FaceRecognition ";
 import CreateFace from "@/components/CreateFace/CreateFace";
 import axios from "axios";
 

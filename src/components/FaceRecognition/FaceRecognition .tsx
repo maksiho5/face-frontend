@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import * as faceapi from "face-api.js";
-import { log } from "console";
-import axios from "axios";
+
+
 import Image from "next/image";
 
 

@@ -24,7 +24,7 @@ interface FileData {
     name?: string
     __v?: number;
 }
-function FaceRecognition({ modelsLoaded, trainingLoaded, faces, labeledFaceDescriptors, learningLoaded }: { modelsLoaded: boolean, trainingLoaded: boolean, faces: FileData[], labeledFaceDescriptors: any, learningLoaded: boolean }) {
+function FaceRecognition({ modelsLoaded, trainingLoaded, faces, labeledFaceDescriptors, learningLoaded }: { modelsLoaded: boolean, trainingLoaded: boolean, faces: FileData[], labeledFaceDescriptors: faceapi.LabeledFaceDescriptors[], learningLoaded: boolean }) {
     const [selectedFile, setSelectedFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [matchResults, setMatchResults] = useState([]);

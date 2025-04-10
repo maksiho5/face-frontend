@@ -15,16 +15,10 @@ interface CreatedImage {
     message: string
 }
 
-
-interface FileData {
-    _id: string;
-    filename: string;
-    path: string;
-    name?: string
-    __v?: number;
-}
-
-function CreateFace({ labeledFaceDescriptors, faces, setFces }: { labeledFaceDescriptors: any, faces: FileData[], setFces: any }) {
+  
+ 
+  function CreateFace({ labeledFaceDescriptors, faces, setFces }: { labeledFaceDescriptors: faceapi.LabeledFaceDescriptors[], faces: FileData[], setFces: React.Dispatch<React.SetStateAction<FileData[]>> }) {
+  
     const [selectedFile, setSelectedFile] = useState<File | string | Blob>('');
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [buttonsUpload, setButtonsUpload] = useState<"flex" | "hidden">("hidden");

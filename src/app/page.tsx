@@ -2,10 +2,9 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import * as faceapi from "face-api.js";
-import FaceRecognition from "@/components/FaceRecognition/FaceRecognition ";
+import FaceRecognition from "@/components/FaceRecognition/FaceRecognition";
 import CreateFace from "@/components/CreateFace/CreateFace";
 import axios from "axios";
-import { log } from "node:console";
 
 const emotionTranslations = {
   angry: "Злость",
@@ -22,22 +21,22 @@ const genderTranslations = {
   female: "Женщина",
 };
 
-
 interface FileData {
   _id: string;
   filename: string;
   path: string;
-  name?: string
+  name?: string;
   __v?: number;
 }
 
 const App = () => {
-  const [mode, setMode] = useState("emotion"); // "emotion" 
+  const [mode, setMode] = useState("emotion");
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [learningLoaded, setLearningLoaded] = useState(false);
   const [faces, setFces] = useState<FileData[]>([]);
   const [trainingLoaded, setTrainingLoaded] = useState(false);
-  const [labeledFaceDescriptors, setLabeledFaceDescriptors] = useState(null);
+  const [labeledFaceDescriptors, setLabeledFaceDescriptors] = useState<faceapi.LabeledFaceDescriptors[] | null>(null);
+
   useEffect(() => {
     const loadModels = async () => {
       try {
@@ -48,55 +47,47 @@ const App = () => {
         await faceapi.nets.faceExpressionNet.loadFromUri("/models");
         setModelsLoaded(true);
         setLearningLoaded(true);
-
         console.log("Модели загружены!");
       } catch (error) {
         console.error("Ошибка загрузки моделей:", error);
       }
-    }
-
+    };
     loadModels();
   }, []);
-
 
   useEffect(() => {
     if (!modelsLoaded) return;
 
-
     const loadLabeledImages = async () => {
-      const getFace = await axios.get<FileData[]>('https://backend-face-production.up.railway.app/image/getFace')
-    await  console.log(getFace.data);
+      try {
+        const getFace = await axios.get<FileData[]>("https://backend-face-production.up.railway.app/image/getFace");
+        setFces(getFace.data);
 
-      setFces([...getFace.data])
+        const labeledDescriptors = await Promise.all(
+          getFace.data.map(async (data) => {
+            const descriptions: faceapi.FaceDescriptor[] = [];
+            const imgUrl = data.path;
+            try {
+              const img = await faceapi.fetchImage(imgUrl);
+              const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
 
-      return Promise.all(
-        getFace.data.map(async (data: FileData) => {
-          setTrainingLoaded(true)
-          const descriptions = [];
-          const imgUrl = data.path
-          try {
-
-            const img = await faceapi.fetchImage(imgUrl);
-
-            const detections = await faceapi
-              .detectSingleFace(img)
-              .withFaceLandmarks()
-              .withFaceDescriptor()
-console.log("Обучены");
-
-            if (detections) descriptions.push(detections.descriptor);
-            setLearningLoaded(false);
-
-          } catch (err) {
-            console.log(`Ошибка при загрузке изображения ${imgUrl}:`, err);
-          }
-          return new faceapi.LabeledFaceDescriptors(data.filename, descriptions);
-        })
-      );
+              if (detections) descriptions.push(detections.descriptor);
+              setLearningLoaded(false);
+            } catch (err) {
+              console.error(`Ошибка при загрузке изображения ${imgUrl}:`, err);
+            }
+            return new faceapi.LabeledFaceDescriptors(data.filename, descriptions);
+          })
+        );
+        setLabeledFaceDescriptors(labeledDescriptors);
+      } catch (err) {
+        console.error("Ошибка загрузки лиц:", err);
+      }
     };
 
-    loadLabeledImages().then(setLabeledFaceDescriptors);
+    loadLabeledImages();
   }, [modelsLoaded]);
+
   return (
     <div className="flex flex-col items-center gap-6 p-6 bg-gray-900 min-h-screen text-white">
       <h1 className="text-3xl font-bold text-blue-400 text-center">Face AI</h1>
@@ -120,7 +111,13 @@ console.log("Обучены");
           Загрузить фото
         </button>
       </div>
-      {mode === "emotion" ? <EmotionDetection modelsLoaded={modelsLoaded} /> : mode === "addFace" ? <CreateFace  labeledFaceDescriptors={labeledFaceDescriptors} faces={faces} setFces={setFces} /> : <FaceRecognition modelsLoaded={modelsLoaded} faces={faces} trainingLoaded={trainingLoaded} labeledFaceDescriptors={labeledFaceDescriptors} learningLoaded={learningLoaded} />}
+      {mode === "emotion" ? (
+        <EmotionDetection modelsLoaded={modelsLoaded} />
+      ) : mode === "addFace" ? (
+        <CreateFace labeledFaceDescriptors={labeledFaceDescriptors} faces={faces} setFces={setFces} />
+      ) : (
+        <FaceRecognition modelsLoaded={modelsLoaded} faces={faces} trainingLoaded={trainingLoaded} labeledFaceDescriptors={labeledFaceDescriptors} learningLoaded={learningLoaded} />
+      )}
     </div>
   );
 };
@@ -134,8 +131,6 @@ const EmotionDetection = ({ modelsLoaded }: { modelsLoaded: boolean }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
-
 
   const startCamera = async () => {
     if (!modelsLoaded) return;
@@ -161,13 +156,13 @@ const EmotionDetection = ({ modelsLoaded }: { modelsLoaded: boolean }) => {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d");
 
-
         if (video.videoWidth === 0 || video.videoHeight === 0) {
           console.warn("Видео еще не загружено, пропускаем кадр...");
           return;
         }
 
-        const detections = await faceapi.detectAllFaces(video)
+        const detections = await faceapi
+          .detectAllFaces(video)
           .withFaceLandmarks()
           .withFaceExpressions()
           .withAgeAndGender();

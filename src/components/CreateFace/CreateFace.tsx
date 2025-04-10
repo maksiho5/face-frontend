@@ -1,7 +1,7 @@
 import Image from 'next/image';
-import { log } from 'node:console';
+
 import React, { useState } from 'react'
-import * as faceapi from "face-api.js";
+
 import axios from 'axios';
 interface FileData {
     _id: string;

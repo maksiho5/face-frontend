@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import * as faceapi from "face-api.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import * as faceapi from 'face-api.js';
 
 
 import Image from "next/image";

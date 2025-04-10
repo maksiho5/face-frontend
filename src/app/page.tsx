@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import * as faceapi from "face-api.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import * as faceapi from 'face-api.js';
 import FaceRecognition from "@/components/FaceRecognition/FaceRecognition ";
 import CreateFace from "@/components/CreateFace/CreateFace";
 import axios from "axios";

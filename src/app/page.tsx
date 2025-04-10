@@ -114,7 +114,7 @@ const App = () => {
       {mode === "emotion" ? (
         <EmotionDetection modelsLoaded={modelsLoaded} />
       ) : mode === "addFace" ? (
-        <CreateFace labeledFaceDescriptors={labeledFaceDescriptors} faces={faces} setFces={setFces} />
+        <CreateFace  />
       ) : (
         <FaceRecognition modelsLoaded={modelsLoaded} faces={faces} trainingLoaded={trainingLoaded} labeledFaceDescriptors={labeledFaceDescriptors} learningLoaded={learningLoaded} />
       )}

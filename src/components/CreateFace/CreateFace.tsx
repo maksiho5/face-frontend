@@ -18,7 +18,7 @@ interface CreatedImage {
 
   
  
-  function CreateFace({ labeledFaceDescriptors, faces, setFces }: { labeledFaceDescriptors: faceapi.LabeledFaceDescriptors[], faces: FileData[], setFces: React.Dispatch<React.SetStateAction<FileData[]>> }) {
+  function CreateFace() {
   
     const [selectedFile, setSelectedFile] = useState<File | string | Blob>('');
     const [imagePreview, setImagePreview] = useState<string | null>(null);

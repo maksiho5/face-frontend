@@ -3,6 +3,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import * as faceapi from "face-api.js";
 import FaceRecognition from "@/components/FaceRecognition/FaceRecognition ";
+import CreateFace from "@/components/CreateFace/CreateFace";
+import axios from "axios";
+import { log } from "node:console";
 
 const emotionTranslations = {
   angry: "Злость",
@@ -19,10 +22,81 @@ const genderTranslations = {
   female: "Женщина",
 };
 
-const App = () => {
-  const [mode, setMode] = useState("emotion"); // "emotion" или "recognition"
-  const [modelsLoaded, setModelsLoaded] = useState(false);
 
+interface FileData {
+  _id: string;
+  filename: string;
+  path: string;
+  name?: string
+  __v?: number;
+}
+
+const App = () => {
+  const [mode, setMode] = useState("emotion"); // "emotion" 
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+  const [learningLoaded, setLearningLoaded] = useState(false);
+  const [faces, setFces] = useState<FileData[]>([]);
+  const [trainingLoaded, setTrainingLoaded] = useState(false);
+  const [labeledFaceDescriptors, setLabeledFaceDescriptors] = useState(null);
+  useEffect(() => {
+    const loadModels = async () => {
+      try {
+        await faceapi.nets.ssdMobilenetv1.loadFromUri("/models");
+        await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
+        await faceapi.nets.faceRecognitionNet.loadFromUri("/models");
+        await faceapi.nets.ageGenderNet.loadFromUri("/models");
+        await faceapi.nets.faceExpressionNet.loadFromUri("/models");
+        setModelsLoaded(true);
+        setLearningLoaded(true);
+
+        console.log("Модели загружены!");
+      } catch (error) {
+        console.error("Ошибка загрузки моделей:", error);
+      }
+    }
+
+    loadModels();
+  }, []);
+
+
+  useEffect(() => {
+    if (!modelsLoaded) return;
+
+
+    const loadLabeledImages = async () => {
+      const getFace = await axios.get<FileData[]>('https://backend-face-production.up.railway.app/image/getFace')
+    await  console.log(getFace.data);
+
+      setFces([...getFace.data])
+
+      return Promise.all(
+        getFace.data.map(async (data: FileData) => {
+          setTrainingLoaded(true)
+          const descriptions = [];
+          const imgUrl = data.path
+          try {
+
+            const img = await faceapi.fetchImage(imgUrl);
+
+            const detections = await faceapi
+              .detectSingleFace(img)
+              .withFaceLandmarks()
+              .withFaceDescriptor()
+console.log("Обучены");
+
+            if (detections) descriptions.push(detections.descriptor);
+            setLearningLoaded(false);
+
+          } catch (err) {
+            console.log(`Ошибка при загрузке изображения ${imgUrl}:`, err);
+          }
+          return new faceapi.LabeledFaceDescriptors(data.filename, descriptions);
+        })
+      );
+    };
+
+    loadLabeledImages().then(setLabeledFaceDescriptors);
+  }, [modelsLoaded]);
   return (
     <div className="flex flex-col items-center gap-6 p-6 bg-gray-900 min-h-screen text-white">
       <h1 className="text-3xl font-bold text-blue-400 text-center">Face AI</h1>
@@ -39,40 +113,29 @@ const App = () => {
         >
           Распознавание по фото
         </button>
+        <button
+          onClick={() => setMode("addFace")}
+          className={`px-6 py-2 rounded-lg transition-all ${mode === "addFace" ? "bg-blue-500" : "bg-gray-600"}`}
+        >
+          Загрузить фото
+        </button>
       </div>
-      {mode === "emotion" ? <EmotionDetection /> : <FaceRecognition />}
+      {mode === "emotion" ? <EmotionDetection modelsLoaded={modelsLoaded} /> : mode === "addFace" ? <CreateFace  labeledFaceDescriptors={labeledFaceDescriptors} faces={faces} setFces={setFces} /> : <FaceRecognition modelsLoaded={modelsLoaded} faces={faces} trainingLoaded={trainingLoaded} labeledFaceDescriptors={labeledFaceDescriptors} learningLoaded={learningLoaded} />}
     </div>
   );
 };
 
-const EmotionDetection = () => {
+const EmotionDetection = ({ modelsLoaded }: { modelsLoaded: boolean }) => {
   const [emotion, setEmotion] = useState<string | null>(null);
   const [age, setAge] = useState<number | null>(null);
   const [gender, setGender] = useState<string | null>(null);
   const [isCameraOn, setIsCameraOn] = useState(false);
-  const [modelsLoaded, setModelsLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    const loadModels = async () => {
-      try {
-        await faceapi.nets.ssdMobilenetv1.loadFromUri("/models");
-        await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
-        await faceapi.nets.faceRecognitionNet.loadFromUri("/models");
-        await faceapi.nets.ageGenderNet.loadFromUri("/models");
-        await faceapi.nets.faceExpressionNet.loadFromUri("/models");
-        setModelsLoaded(true);
-        console.log("Модели загружены!");
-      } catch (error) {
-        console.error("Ошибка загрузки моделей:", error);
-      }
-    };
 
-    loadModels();
-  }, []);
 
   const startCamera = async () => {
     if (!modelsLoaded) return;

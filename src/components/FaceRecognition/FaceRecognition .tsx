@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import {  useState, useRef } from "react";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import * as faceapi from 'face-api.js';
 
@@ -6,18 +6,7 @@ import * as faceapi from 'face-api.js';
 import Image from "next/image";
 
 
-const labels = [
-    "Джереми Реннер",
-    "Дмитрий Назаров",
-    "Дориан Хэрвуд",
-    "Дуэйн Джонсон",
-    "Крис Хемсворт",
-    "Крис Эванс",
-    "Кэрол Дэнверс",
-    "Роберт Дауни-младший",
-    "Скарлетт Йоханссон",
-    "Cергей Безруков"
-];
+
 interface FileData {
     _id: string;
     filename: string;
@@ -25,13 +14,13 @@ interface FileData {
     name?: string
     __v?: number;
 }
-function FaceRecognition({ modelsLoaded, trainingLoaded, faces, labeledFaceDescriptors, learningLoaded }: { modelsLoaded: boolean, trainingLoaded: boolean, faces: FileData[], labeledFaceDescriptors: faceapi.LabeledFaceDescriptors[], learningLoaded: boolean }) {
+function FaceRecognition({  trainingLoaded, faces, labeledFaceDescriptors, learningLoaded }: {  trainingLoaded: boolean, faces: FileData[], labeledFaceDescriptors: faceapi.LabeledFaceDescriptors[], learningLoaded: boolean }) {
     const [selectedFile, setSelectedFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [matchResults, setMatchResults] = useState([]);
     const imageRef = useRef(null);
     const canvasRef = useRef(null);
-    const [loading, setLoading] = useState(false);
+
 
 
 

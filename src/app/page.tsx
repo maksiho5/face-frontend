@@ -48,6 +48,7 @@ const App = () => {
         await faceapi.nets.faceExpressionNet.loadFromUri("/models");
         setModelsLoaded(true);
         setLearningLoaded(true);
+        setTrainingLoaded(true)
         console.log("Модели загружены!");
       } catch (error) {
         console.error("Ошибка загрузки моделей:", error);
@@ -117,7 +118,7 @@ const App = () => {
       ) : mode === "addFace" ? (
         <CreateFace  />
       ) : (
-        <FaceRecognition modelsLoaded={modelsLoaded} faces={faces} trainingLoaded={trainingLoaded} labeledFaceDescriptors={labeledFaceDescriptors} learningLoaded={learningLoaded} />
+        <FaceRecognition  faces={faces} trainingLoaded={trainingLoaded} labeledFaceDescriptors={labeledFaceDescriptors} learningLoaded={learningLoaded} />
       )}
     </div>
   );

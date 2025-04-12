@@ -44,11 +44,11 @@ const App = () => {
   useEffect(() => {
     const loadModels = async () => {
       try {
-        await faceapi.nets.ssdMobilenetv1.loadFromUri("/models");
-        await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
-        await faceapi.nets.faceRecognitionNet.loadFromUri("/models");
-        await faceapi.nets.ageGenderNet.loadFromUri("/models");
-        await faceapi.nets.faceExpressionNet.loadFromUri("/models");
+        await faceapi.nets.ssdMobilenetv1.loadFromUri("/https://maksiho5.github.io/face-frontend/models");
+        await faceapi.nets.faceLandmark68Net.loadFromUri("/https://maksiho5.github.io/face-frontend/models");
+        await faceapi.nets.faceRecognitionNet.loadFromUri("/https://maksiho5.github.io/face-frontend/models");
+        await faceapi.nets.ageGenderNet.loadFromUri("/https://maksiho5.github.io/face-frontend/models");
+        await faceapi.nets.faceExpressionNet.loadFromUri("/https://maksiho5.github.io/face-frontend/models");
         setModelsLoaded(true);
         setLearningLoaded(true);
         setTrainingLoaded(true)

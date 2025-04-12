@@ -49,7 +49,6 @@ const App = () => {
         await faceapi.nets.faceRecognitionNet.loadFromUri("/face-frontend/models");
         await faceapi.nets.ageGenderNet.loadFromUri("/face-frontend/models");
         await faceapi.nets.faceExpressionNet.loadFromUri("/face-frontend/models");
-        await faceapi.nets.tinyYolov2.loadFromUri('/face-frontend/models');
         setModelsLoaded(true);
         setLearningLoaded(true);
         setTrainingLoaded(true)
@@ -169,7 +168,7 @@ const EmotionDetection: React.FC<EmotionDetectionProps> = ({ modelsLoaded }) => 
         }
 
         const detections = await faceapi
-          .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+          .detectAllFaces(video, new faceapi.SsdMobilenetv1Options())
           .withFaceLandmarks()
           .withFaceExpressions()
           .withAgeAndGender();

@@ -50,7 +50,9 @@ interface CreatedImage {
         setImagePreview(null);
         setButtonsUpload("hidden")
     }
-    const getNameFace = (e) => {
+    const getNameFace = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+        
         setNameFace(e.target.value)
         if (selectedFile && nameFace) {
             setButtonsUpload("flex")

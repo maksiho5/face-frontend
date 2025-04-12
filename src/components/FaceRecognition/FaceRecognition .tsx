@@ -1,164 +1,166 @@
-import {  useState, useRef } from "react";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import * as faceapi from 'face-api.js';
-
-
+import { useState, useRef, ChangeEvent } from "react";
+import * as faceapi from "face-api.js";
 import Image from "next/image";
 
-
-
 interface FileData {
-    _id: string;
-    filename: string;
-    path: string;
-    name?: string
-    __v?: number;
+  _id: string;
+  filename: string;
+  path: string;
+  name?: string;
+  __v?: number;
 }
-function FaceRecognition({  trainingLoaded, faces, labeledFaceDescriptors, learningLoaded }: {  trainingLoaded: boolean, faces: FileData[], labeledFaceDescriptors: faceapi.LabeledFaceDescriptors[], learningLoaded: boolean }) {
-    const [selectedFile, setSelectedFile] = useState(null);
-    const [imagePreview, setImagePreview] = useState(null);
-    const [matchResults, setMatchResults] = useState([]);
-    const imageRef = useRef(null);
-    const canvasRef = useRef(null);
 
+interface FaceRecognitionProps {
+  trainingLoaded: boolean;
+  faces: FileData[];
+  labeledFaceDescriptors: faceapi.LabeledFaceDescriptors[];
+  learningLoaded: boolean;
+}
 
+const FaceRecognition: React.FC<FaceRecognitionProps> = ({
+  trainingLoaded,
+  faces,
+  labeledFaceDescriptors,
+  learningLoaded,
+}) => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [matchResults, setMatchResults] = useState<FileData[]>([]);
+  const imageRef = useRef<HTMLImageElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = event.target.files?.[0];
+      if (!file) return;
 
+      setSelectedFile(file);
+      setImagePreview(URL.createObjectURL(file));
+      setMatchResults([]);
 
-
-    // 📌 Обрабатываем загрузку нового изображения
-    const handleFileChange = (event) => {
-
-        try {
-            const file = event.target.files[0];
-
-
-            setSelectedFile(file);
-            setImagePreview(URL.createObjectURL(file));
-            setMatchResults([]);
-            if (canvasRef.current) {
-                const ctx = canvasRef.current.getContext("2d");
-                ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-            }
-            // setLoading(false)
-        } catch (e) {
-            console.log(e);
-
+      if (canvasRef.current) {
+        const ctx = canvasRef.current.getContext("2d");
+        if (ctx && canvasRef.current.width && canvasRef.current.height) {
+          ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
         }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
-    };
+  const recognizeFaces = async () => {
+    try {
+      if (!selectedFile) return alert("Загрузите изображение!");
 
-    const recognizeFaces = async () => {
+      const img = await faceapi.bufferToImage(selectedFile);
+      const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors);
 
-        try {
-            if (!selectedFile) return alert("Загрузи изображение!");
+      const detections = await faceapi
+        .detectAllFaces(img)
+        .withFaceLandmarks()
+        .withFaceDescriptors();
 
-            const img = await faceapi.bufferToImage(selectedFile);
-            const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors);
+      if (detections.length === 0) {
+        setMatchResults([{ _id: "unknown", filename: "", path: "", name: "❌ Лица не найдены" }]);
+        return;
+      }
 
-            const detections = await faceapi
-                .detectAllFaces(img)
-                .withFaceLandmarks()
-                .withFaceDescriptors();
-            console.log(detections, "analysis detections");
+      const results: FileData[] = detections
+        .map((detection) => {
+          const bestMatch = faceMatcher.findBestMatch(detection.descriptor).toString();
+          const matchName = bestMatch.split(" ")[0];
 
-            if (detections.length === 0) {
-                setMatchResults(["❌ Лица не найдены"]);
-                return;
-            }
+          if (matchName === "unknown") {
+            return {
+              _id: "unknown",
+              filename: "",
+              path: "",
+              name: "Лицо не найдено",
+            };
+          }
 
-           
-            const results = detections.map((detection) => {
-                const data = faceMatcher.findBestMatch(detection.descriptor).toString();
+          const matchedFace = faces.find((face) => face.filename === matchName);
+          return matchedFace ?? {
+            _id: "unknown",
+            filename: "",
+            path: "",
+            name: "Лицо не найдено",
+          };
+        })
+        .filter(Boolean) as FileData[];
 
-                console.log(data.split(' ')[0]);
-                if (data.split(' ')[0] == "unknown") {
-                    return { name: "Лица не неайдено" }
-                } 
+      setMatchResults(results);
 
-                return faces.filter(el => {
-                    console.log(el.filename == data.split(' ')[0]);
-                    return el.filename == data.split(' ')[0];
-                });
-            }).flat();
-            console.log(results);
+      // Рисуем рамки
+      const canvas = canvasRef.current;
+      const imgElement = imageRef.current;
+      if (!canvas || !imgElement) return;
 
-            // if (results[0].split(' ')[0] == "unknown") {
-            //     setMatchResults(["❌ Лица не найдены"]);
-            //     return;
-            // }
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
 
-            setMatchResults(results);
+      faceapi.matchDimensions(canvas, imgElement);
+      const resizedDetections = faceapi.resizeResults(detections, imgElement);
+      faceapi.draw.drawDetections(canvas, resizedDetections);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
-            // 📌 Рисуем рамки
-            const canvas = canvasRef.current;
-            const imgElement = imageRef.current;
-            if (!canvas || !imgElement) return;
+  return (
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center p-4">
+      <h1 className="text-3xl font-bold mb-4">🦸‍♂️ Определить лица</h1>
 
-            const ctx = canvas.getContext("2d");
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+      {/* Выбор файла */}
+      <input type="file" className="mb-4 p-2 bg-gray-700 rounded" onChange={handleFileChange} />
 
-            faceapi.matchDimensions(canvas, imgElement);
-            const resizedDetections = faceapi.resizeResults(detections, imgElement);
-            faceapi.draw.drawDetections(canvas, resizedDetections);
-        } catch (e) {
-            console.log(e);
+      {learningLoaded ? (
+        <button
+          className="px-4 py-2 bg-gray-500 text-gray-300 cursor-not-allowed"
+          onClick={recognizeFaces}
+          disabled={!selectedFile}
+        >
+          {trainingLoaded ? "⟳ Загрузка данных" : "⟳ Загрузка моделей"}
+        </button>
+      ) : (
+        <button
+          className={`px-4 py-2 ${selectedFile ? "bg-blue-600 hover:bg-blue-500 rounded transition" : "rounded-lg transition-all bg-gray-600"}`}
+          onClick={recognizeFaces}
+          disabled={!selectedFile}
+        >
+          {selectedFile ? "🔍 Распознать" : "Загрузите изображение"}
+        </button>
+      )}
 
-        }
-
-    };
-
-    return (
-        <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center p-4">
-            <h1 className="text-3xl font-bold mb-4">🦸‍♂️ Определить лица</h1>
-
-            {/* Выбор файла */}
-            <input type="file" className="mb-4 p-2 bg-gray-700 rounded" onChange={handleFileChange} />
-
-            {learningLoaded  ? <button
-                className="px-4 py-2 bg-gray-500 text-gray-300 cursor-not-allowed"
-                onClick={recognizeFaces}
-                disabled={!selectedFile}
-            >
-                {trainingLoaded ? "⟳ Загрузка данных" : "⟳ Загрузка моделей"}
-            </button> : <button
-                className={`px-4 py-2 ${selectedFile ? "bg-blue-600 hover:bg-blue-500 rounded transition" : "rounded-lg transition-all bg-gray-600"}`}
-                onClick={recognizeFaces}
-                disabled={!selectedFile}
-            >
-                {selectedFile ? "🔍 Распознать" : "Загрузите изображение"}
-            </button>}
-
-
-            {/* Превью загруженного изображения */}
-            {imagePreview && (
-                <div className="relative mt-6 w-85">
-                    <Image
-                        src={imagePreview}
-                        alt="Uploaded"
-                        className="max-w-full rounded shadow-lg w-30px h-30px"
-                        ref={imageRef}
-                    />
-                    <canvas
-                        ref={canvasRef}
-                        className="absolute top-0 left-0 w-full h-full"
-                    />
-                </div>
-            )}
-
-            {/* Результаты */}
-            <div className="mt-6 p-4 bg-gray-800 rounded shadow-lg w-full max-w-md">
-                <h2 className="text-xl font-semibold">🎯 Результаты:</h2>
-                <ul className="mt-2">
-                    {matchResults.map((result: FileData, index) => (
-                        <li key={index} className="p-2 bg-gray-700 rounded mt-1">
-                            {result.name}
-                        </li>
-                    ))}
-                </ul>
-            </div>
+      {/* Превью загруженного изображения */}
+      {imagePreview && (
+        <div className="relative mt-6 w-85">
+          <Image
+            src={imagePreview}
+            alt="Uploaded"
+            className="max-w-full rounded shadow-lg w-30px h-30px"
+            ref={imageRef}
+            width={500}
+            height={500}
+          />
+          <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full" />
         </div>
-    );
-}
+      )}
+
+      {/* Результаты */}
+      <div className="mt-6 p-4 bg-gray-800 rounded shadow-lg w-full max-w-md">
+        <h2 className="text-xl font-semibold">🎯 Результаты:</h2>
+        <ul className="mt-2">
+          {matchResults.map((result, index) => (
+            <li key={index} className="p-2 bg-gray-700 rounded mt-1">
+              {result.name}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+};
 
 export default FaceRecognition;

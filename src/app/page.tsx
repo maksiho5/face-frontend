@@ -7,19 +7,19 @@ import FaceRecognition from "@/components/FaceRecognition/FaceRecognition ";
 import CreateFace from "@/components/CreateFace/CreateFace";
 import axios from "axios";
 
-const emotionTranslations = {
-  angry: "Злость",
-  disgusted: "Отвращение",
-  fearful: "Страх",
-  happy: "Счастье",
-  neutral: "Нейтральное",
-  sad: "Грусть",
-  surprised: "Удивление",
-};
-
-const genderTranslations = {
+const genderTranslations: Record<string, string> = {
   male: "Мужчина",
   female: "Женщина",
+};
+
+const emotionTranslations: Record<string, string> = {
+  angry: "Злой",
+  disgusted: "Отвращение",
+  fearful: "Испуганный",
+  happy: "Счастливый",
+  neutral: "Нейтральный",
+  sad: "Грустный",
+  surprised: "Удивлённый",
 };
 
 interface FileData {
@@ -28,6 +28,9 @@ interface FileData {
   path: string;
   name?: string;
   __v?: number;
+}
+interface EmotionDetectionProps {
+  modelsLoaded: boolean;
 }
 
 const App = () => {
@@ -124,15 +127,16 @@ const App = () => {
   );
 };
 
-const EmotionDetection = ({ modelsLoaded }: { modelsLoaded: boolean }) => {
+const EmotionDetection: React.FC<EmotionDetectionProps> = ({ modelsLoaded }) => {
   const [emotion, setEmotion] = useState<string | null>(null);
   const [age, setAge] = useState<number | null>(null);
   const [gender, setGender] = useState<string | null>(null);
   const [isCameraOn, setIsCameraOn] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const startCamera = async () => {
     if (!modelsLoaded) return;
@@ -164,7 +168,7 @@ const EmotionDetection = ({ modelsLoaded }: { modelsLoaded: boolean }) => {
         }
 
         const detections = await faceapi
-          .detectAllFaces(video)
+          .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
           .withFaceLandmarks()
           .withFaceExpressions()
           .withAgeAndGender();
@@ -183,12 +187,14 @@ const EmotionDetection = ({ modelsLoaded }: { modelsLoaded: boolean }) => {
 
         if (detections.length > 0) {
           const { age, gender, expressions } = detections[0];
+
           setAge(Math.round(age));
           setGender(genderTranslations[gender] || gender);
 
           const dominantEmotion = Object.keys(expressions).reduce((a, b) =>
-            expressions[a] > expressions[b] ? a : b
+            expressions[a as keyof typeof expressions] > expressions[b as keyof typeof expressions] ? a : b
           );
+
           setEmotion(emotionTranslations[dominantEmotion] || dominantEmotion);
         } else {
           setEmotion(null);
@@ -219,12 +225,7 @@ const EmotionDetection = ({ modelsLoaded }: { modelsLoaded: boolean }) => {
       <h1 className="text-3xl font-bold text-blue-400 text-center">Распознавание лиц</h1>
 
       <div className="relative w-full max-w-lg h-[480px] border-4 border-blue-400 rounded-lg overflow-hidden">
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          className="w-full h-full object-cover"
-        />
+        <video ref={videoRef} autoPlay muted className="w-full h-full object-cover" />
         <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full" />
       </div>
 

@@ -62,6 +62,12 @@ function CreateFace(labeledFaceDescriptors: { labeledFaceDescriptors: faceapi.La
         }
     }
     const loadFile = async () => {
+        if (!selectedFile) return alert("Загрузи изображение!");
+
+        if (typeof selectedFile === "string") {
+            alert("Ошибка: selectedFile — строка, а нужен файл.");
+            return;
+        }
         const img = await faceapi.bufferToImage(selectedFile);
         const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors);
         const detections = await faceapi

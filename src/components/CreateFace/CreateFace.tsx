@@ -19,7 +19,9 @@ interface CreatedImage {
 
 
 
-function CreateFace(labeledFaceDescriptors: { labeledFaceDescriptors: faceapi.LabeledFaceDescriptors[] }) {
+function CreateFace(
+    // labeledFaceDescriptors: { labeledFaceDescriptors: faceapi.LabeledFaceDescriptors[] }
+) {
 
     const [selectedFile, setSelectedFile] = useState<File | string | Blob>('');
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -69,18 +71,18 @@ function CreateFace(labeledFaceDescriptors: { labeledFaceDescriptors: faceapi.La
             return;
         }
         const img = await faceapi.bufferToImage(selectedFile);
-        const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors);
+        // const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors);
         const detections = await faceapi
             .detectAllFaces(img)
             .withFaceLandmarks()
             .withFaceDescriptors();
 
 
-        const results = detections.map((detection) => {
-            const data = faceMatcher.findBestMatch(detection.descriptor).toString();
-            return data.split(' ')[0]
+        // const results = detections.map((detection) => {
+        //     const data = faceMatcher.findBestMatch(detection.descriptor).toString();
+        //     return data.split(' ')[0]
 
-        })
+        // })
 
 
 
@@ -90,9 +92,9 @@ function CreateFace(labeledFaceDescriptors: { labeledFaceDescriptors: faceapi.La
         }
 
 
-        if (results[0] !== "unknown") {
-            alert("Такой человек уже есть в базе")
-        }
+        // if (results[0] !== "unknown") {
+        //     alert("Такой человек уже есть в базе")
+        // }
         try {
             const dataInformation = new FormData()
             dataInformation.append('file', selectedFile)

@@ -1,5 +1,6 @@
 import Image from 'next/image';
-
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import * as faceapi from 'face-api.js';
 import React, { useState } from 'react'
 
 import axios from 'axios';
@@ -16,10 +17,10 @@ interface CreatedImage {
 }
 
 
-  
- 
-  function CreateFace() {
-  
+
+
+function CreateFace(labeledFaceDescriptors: { labeledFaceDescriptors: faceapi.LabeledFaceDescriptors[] }) {
+
     const [selectedFile, setSelectedFile] = useState<File | string | Blob>('');
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [buttonsUpload, setButtonsUpload] = useState<"flex" | "hidden">("hidden");
@@ -52,7 +53,7 @@ interface CreatedImage {
     }
     const getNameFace = (e: React.ChangeEvent<HTMLInputElement>) => {
 
-        
+
         setNameFace(e.target.value)
         if (selectedFile && nameFace) {
             setButtonsUpload("flex")
@@ -61,31 +62,31 @@ interface CreatedImage {
         }
     }
     const loadFile = async () => {
-        // const img = await faceapi.bufferToImage(selectedFile);
-        // const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors);
-        // const detections = await faceapi
-        //     .detectAllFaces(img)
-        //     .withFaceLandmarks()
-        //     .withFaceDescriptors();
+        const img = await faceapi.bufferToImage(selectedFile);
+        const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors);
+        const detections = await faceapi
+            .detectAllFaces(img)
+            .withFaceLandmarks()
+            .withFaceDescriptors();
 
 
-        // const results = detections.map((detection) => {
-        //     const data = faceMatcher.findBestMatch(detection.descriptor).toString();
-        //     return data.split(' ')[0]
+        const results = detections.map((detection) => {
+            const data = faceMatcher.findBestMatch(detection.descriptor).toString();
+            return data.split(' ')[0]
 
-        // })
-
-
-
-        // if (detections.length > 1 || detections.length == 0) {
-        //     alert("На изоброжении должен быть один человек")
-        //     return;
-        // }
+        })
 
 
-        // if (results[0] !== "unknown") {
-        //     alert("Такой человек уже есть в базе")
-        // }
+
+        if (detections.length > 1 || detections.length == 0) {
+            alert("На изоброжении должен быть один человек")
+            return;
+        }
+
+
+        if (results[0] !== "unknown") {
+            alert("Такой человек уже есть в базе")
+        }
         try {
             const dataInformation = new FormData()
             dataInformation.append('file', selectedFile)
@@ -95,7 +96,7 @@ interface CreatedImage {
             alert(data.data.message)
             console.log(data.data.file);
 
-            
+
         } catch (error) {
             alert(error)
         }
